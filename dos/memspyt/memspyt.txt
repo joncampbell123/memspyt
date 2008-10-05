@@ -1,0 +1,130 @@
+Jonathan Campbell's tiny 8086-compatible memory spy for DOS.
+
+Works on 8086 compatible machines.
+But also supports 386 "flat" mode to enable probing around
+in extended memory.
+
+Written in 100% assembly language.
+Tiny memory footprint.
+
+
+You will need NASM to assemble this into a working binary.
+Linux distros should have this installed already. Windows users
+can download a binary that they can just plop into their Windows
+directory. Even DOS is not left out: get the 32-bit DJGPP version,
+the DOS32/A extender, and some old DOS machine and go to town :)
+
+Warning for Microsoft Windows users:
+         Try not to run this in a Windows "DOS Box". It will seemingly
+         work, but due to the method the program uses to browse extended
+         memory (386 mode) any read beyond 0xFFFF will cause the Windows
+         NTVDM to signal a fault and exit the program. If you must use
+         this tool in a DOS Box, hit the "3" key to turn off 386 mode.
+         This will limit you to 8086 mode which only allows browsing the
+         first 1MB of RAM, but it will work without crashing.
+
+         Ideally, you should find a way to reboot into a pure DOS mode
+         to run this program without problems. Windows 95/98: Reboot,
+         hold down F5 or F8 to bring up the 95/98 boot menu, and select
+         "Command Prompt". Windows ME/NT/2000/XP/Vista: Get yourself
+         an MS-DOS boot disk and run it from there. Or better yet: get
+         a copy of FreeDOS and run it from there.
+
+Modes of operation:
+
+    There are two modes of operation (determined primarily by the CPU):
+
+       * 386 mode
+           
+          Assumes that the CPU has been placed into "Flat real mode",
+          which in most cases (especially Windows 95 "DOS Mode") is
+          exactly what happened. The program then sets the data segment
+          to zero and uses 32-bit addressing modes to read directly from
+          the physical memory address.
+
+          This works great in pure DOS mode, but is frowned upon by
+          DOS VM's such as Windows NT's VDM or Windows 95/98's
+          DOS session manager. Both systems will shut the DOS program down
+          when it attempts to do this.
+
+       * 8086 mode (386 mode=0)
+
+          Using only 8086 instructions, the program reads from the specified
+          physical memory address by computing seg = (addr >> 4) & 0xFFFF0 and
+          offset = (addr & 0xFF) to produce a segment:offset pair corresponding
+          to the specified address. This is 100% compatible with all hardware,
+          processor, and DOS VM configurations (including Windows NT) but limits
+          you to only the first 1MB of your computer's memory.
+
+       The program autodetects the 386 processor, and sets this mode accordingly.
+
+
+CURRENT: -------------2008/09/29-0740-----------------
+Total disk footprint: 753 bytes!
+Memory footprint: 753+1024=1779 bytes!
+
+older: -------------2008/09/29-0502-----------------
+Total disk footprint: 755 bytes!
+Memory footprint: 755+1024=1779 bytes!
+
+older: -------------2008/09/29-0100-----------------
+Total disk footprint: 938 bytes!
+Memory footprint: 938+1024=1962 bytes!
+
+Hardware assumptions:
+ * Either an 8086, with up to 1MB of RAM or
+   a 386, with up to 4GB of RAM.
+
+ * For 386 or higher: an operating system that allows real-mode
+   DOS applications to address extended memory by using 32-bit
+   addressing (aka "flat real mode"). Some CPUs allow this
+   regardless (typically modern CPUs that support 16-bit mode
+   but deprecated some legacy features). Others will work because
+   the underlying operating system keeps the processor in flat
+   real mode so the kernel can access extended memory easily
+   (both FreeDOS and Windows 95's DOS kernel do this, for example).
+
+ * Any graphics adapter that supports 80x25 alphanumeric text
+   (VGA style). Literally every PC built since 1980 should support
+   this. Card must be "color" adapter (VRAM mapped to 0xB8000),
+   which is virtually every VGA card made since the mid eighties.
+   If you need monochrome adapter support (such as, an ancient
+   8086 with an MDA kicking around or some idiot VGA hardware),
+   go into the source code and change VGA_Seg from 0xB800 to
+   0xB000. Recompile the source code, and you'll have a binary
+   that works on monochrome systems.
+
+ * If you intend to "save" snapshots of RAM: You'll need the
+   current working directory to be writeable, and enough room
+   for the memory snapshot. If you take a snapshot of 1MB, then
+   you need 1MB of RAM to hold it. Due to this program's
+   minimalist design, no error messages will be shown if
+   any errors happen during capture. The program will silently
+   fail and return back to the hex dump when:
+      - It is unable to create the file DUMP
+      - Writing fails (typically due to a 'disk full' condition)
+   
+   Therefore, when taking snapshots, run from writeable media
+   and make sure the media is reliable. If running from floppy
+   disk, make sure the disk does not have bad sectors.
+
+   Note that if you are saving an area that DOS uses for variables
+   (disk buffers, local storage, stack) you not get a 100% accurate
+   snapshot. This program is intended for taking snapshots of
+   non-changing memory, like uninitialized areas, or ROM BIOS areas.
+
+
+Help:
+   The EXE is too small to have any useful help, so the keystrokes supported are here:
+
+   ESC = exit to DOS
+   Arrow keys = Navigate through memory
+   g = Go to address (enter at prompt)
+   s = Save memory to file 'DUMP' (it will prompt you how much)
+   3 = switch 386 mode on/off (EX vs 86 mode)
+
+   Note that the 'g' and 's' prompts ask for a number in hexadecimal
+   (without the leading '0x'). So '10000' means 0x10000 = 65536,
+   and '1000' means 0x1000 = 4096.
+
+Enjoy!
